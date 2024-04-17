@@ -125,18 +125,18 @@ mod and_method_is_ref_mut_method {
     #[test]
     fn and_continue_mocked_then_runs_with_modified_args() {
         let mut struct_2 = Struct(2u8);
-        let struct_3 = Struct(3u8);
+        let mut struct_3 = OnceMutCell::new(Struct(3u8));
         let mut struct_str = Struct("str");
         let mut struct_4 = Struct(4u8);
         unsafe {
             <Struct<u8> as Trait<char>>::ref_mut_method.mock_raw(|_, b, c| {
-                MockResult::Continue((as_mut(&struct_3), !b, c.to_ascii_uppercase()))
+                MockResult::Continue((struct_3.borrow(), !b, c.to_ascii_uppercase()))
             });
         }
 
         assert_eq!("0 false A", struct_2.ref_mut_method(true, 'a'));
         assert_eq!(2, struct_2.0);
-        assert_eq!(0, struct_3.0);
+        assert_eq!(0, struct_3.get_mut().0);
         assert_eq!(" true a", struct_str.ref_mut_method(true, 'a'));
         assert_eq!("", struct_str.0);
         assert_eq!("0 true abc", struct_4.ref_mut_method(true, "abc"));
